@@ -90,7 +90,16 @@ def handler(job):
         logger.error(f"Error during generation: {e}")
         return {"error": str(e)}
 
-# Initialize model on cold start
-init_model()
-
-runpod.serverless.start({"handler": handler})
+if __name__ == "__main__":
+    try:
+        print("--- Starting Worker ---")
+        init_model()
+        print("--- Model Initialized ---")
+        runpod.serverless.start({"handler": handler})
+    except Exception as e:
+        print(f"CRITICAL ERROR STARTING WORKER: {e}")
+        logger.exception("Worker failed to start")
+        # Keep process alive briefly to allow logs to be scraped if needed
+        import time
+        time.sleep(5)
+        raise
