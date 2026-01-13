@@ -19,7 +19,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY builder/ builder/
 # This step downloads the model so it's baked into the image. 
 # It might take a while and increase image size significantly.
-RUN python builder/cache_model.py
+# RUN python builder/cache_model.py
 
 # Copy source code
 COPY src/ src/
