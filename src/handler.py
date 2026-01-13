@@ -8,7 +8,7 @@ try:
 except ImportError:
     from diffusers import LTXPipeline as LTXVideoPipeline
 from diffusers.utils import export_to_video
-from src.utils import upload_file_to_supabase
+from utils import upload_file_to_supabase
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
