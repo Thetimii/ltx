@@ -1,0 +1,9 @@
+runpod
+torch>=2.5.0
+diffusers
+transformers
+accelerate
+sentencepiece
+protobuf
+boto3
+imageio-ffmpeg
