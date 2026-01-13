@@ -3,6 +3,22 @@ import torch
 import os
 import uuid
 import logging
+import shutil
+from pathlib import Path
+
+def ensure_dirs():
+    paths = [
+        os.getenv("HF_HOME"),
+        os.getenv("HUGGINGFACE_HUB_CACHE"),
+        os.getenv("TRANSFORMERS_CACHE"),
+        os.getenv("TORCH_HOME"),
+        os.getenv("XDG_CACHE_HOME"),
+        os.getenv("TMPDIR"),
+    ]
+    for p in paths:
+        if p:
+            Path(p).mkdir(parents=True, exist_ok=True)
+
 try:
     from diffusers import LTXVideoPipeline
 except ImportError:
@@ -21,9 +37,11 @@ def init_model():
     if pipe is None:
         model_id = "Lightricks/LTX-2"
         logger.info(f"Loading model: {model_id}")
+        cache_dir = os.getenv("HUGGINGFACE_HUB_CACHE") or os.getenv("HF_HOME") or "/workspace/hf"
         pipe = LTXVideoPipeline.from_pretrained(
             model_id,
-            torch_dtype=torch.bfloat16
+            torch_dtype=torch.bfloat16,
+            cache_dir=cache_dir
         )
         pipe.to("cuda")
         logger.info("Model loaded successfully")
@@ -68,9 +86,13 @@ def handler(job):
         
         video_frames = output.frames[0]
         
-        # Save locally
+        # Save locally to temp dir
+        workdir = Path(os.getenv("TMPDIR", "/workspace/tmp")) / str(uuid.uuid4())
+        workdir.mkdir(parents=True, exist_ok=True)
+        
         output_filename = f"{uuid.uuid4()}.mp4"
-        output_path = os.path.join("/tmp", output_filename)
+        output_path = str(workdir / output_filename)
+        
         export_to_video(video_frames, output_path, fps=24)
         logger.info(f"Video saved to {output_path}")
 
@@ -81,8 +103,8 @@ def handler(job):
         
         # Cleanup
         if os.path.exists(output_path):
-            # os.remove(output_path) # Keep for debugging if needed, or remove
-            os.remove(output_path)
+             # Cleanup workdir
+             shutil.rmtree(workdir)
             
         return {"video_url": video_url}
 
@@ -93,6 +115,7 @@ def handler(job):
 if __name__ == "__main__":
     try:
         print("--- Starting Worker ---")
+        ensure_dirs()
         init_model()
         print("--- Model Initialized ---")
         runpod.serverless.start({"handler": handler})

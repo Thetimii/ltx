@@ -9,6 +9,17 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
+# Set up cache directories for RunPod persistent volume
+ENV HF_HOME=/workspace/hf \
+    HUGGINGFACE_HUB_CACHE=/workspace/hf/hub \
+    TRANSFORMERS_CACHE=/workspace/hf/transformers \
+    TORCH_HOME=/workspace/torch \
+    XDG_CACHE_HOME=/workspace/.cache \
+    TMPDIR=/workspace/tmp
+
+# Create these directories
+RUN mkdir -p /workspace/hf/hub /workspace/hf/transformers /workspace/torch /workspace/.cache /workspace/tmp
+
 WORKDIR /app
 
 # Install python dependencies
