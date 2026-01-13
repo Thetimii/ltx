@@ -1,13 +1,12 @@
 import torch
-from diffusers import DiffusionPipeline
+from diffusers import LTXVideoPipeline
 
 def download_model():
     model_id = "Lightricks/LTX-2"
     print(f"Downloading model: {model_id}")
-    pipe = DiffusionPipeline.from_pretrained(
+    pipe = LTXVideoPipeline.from_pretrained(
         model_id,
-        torch_dtype=torch.bfloat16,
-        trust_remote_code=True
+        torch_dtype=torch.bfloat16
     )
     print("Model downloaded successfully.")
 
