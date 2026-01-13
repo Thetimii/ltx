@@ -3,7 +3,7 @@ import torch
 import os
 import uuid
 import logging
-from diffusers import LTXVideoPipeline
+from diffusers import DiffusionPipeline
 from diffusers.utils import export_to_video
 from src.utils import upload_file_to_supabase
 
@@ -16,11 +16,12 @@ pipe = None
 def init_model():
     global pipe
     if pipe is None:
-        model_id = "Lightricks/LTX-Video"
+        model_id = "Lightricks/LTX-2"
         logger.info(f"Loading model: {model_id}")
-        pipe = LTXVideoPipeline.from_pretrained(
+        pipe = DiffusionPipeline.from_pretrained(
             model_id,
             torch_dtype=torch.bfloat16,
+            trust_remote_code=True
         )
         pipe.to("cuda")
         logger.info("Model loaded successfully")
