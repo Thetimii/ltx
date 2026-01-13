@@ -3,7 +3,10 @@ import torch
 import os
 import uuid
 import logging
-from diffusers import LTXVideoPipeline
+try:
+    from diffusers import LTXVideoPipeline
+except ImportError:
+    from diffusers import LTXPipeline as LTXVideoPipeline
 from diffusers.utils import export_to_video
 from src.utils import upload_file_to_supabase
 

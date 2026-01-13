@@ -1,6 +1,6 @@
 runpod
 torch>=2.5.0
-diffusers>=0.32.0
+diffusers @ git+https://github.com/huggingface/diffusers.git
 transformers>=4.48.0
 accelerate
 sentencepiece

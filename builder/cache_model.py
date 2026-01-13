@@ -1,5 +1,8 @@
 import torch
-from diffusers import LTXVideoPipeline
+try:
+    from diffusers import LTXVideoPipeline
+except ImportError:
+    from diffusers import LTXPipeline as LTXVideoPipeline
 
 def download_model():
     model_id = "Lightricks/LTX-2"
