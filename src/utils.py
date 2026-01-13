@@ -1,47 +1,38 @@
-import boto3
 import os
 import logging
-from botocore.exceptions import ClientError
+from supabase import create_client, Client
 
 logger = logging.getLogger(__name__)
 
-def get_s3_client():
-    return boto3.client(
-        's3',
-        aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
-        aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'),
-        region_name=os.environ.get('AWS_REGION', 'us-east-1')
-    )
+def get_supabase_client() -> Client:
+    url = os.environ.get("SUPABASE_URL")
+    key = os.environ.get("SUPABASE_KEY")
+    if not url or not key:
+        raise ValueError("Missing SUPABASE_URL or SUPABASE_KEY environment variables")
+    return create_client(url, key)
 
-def upload_file_to_s3(file_name, bucket, object_name=None, expiration=3600*24):
-    """Upload a file to an S3 bucket and return a presigned URL."""
-
-    # If S3 object_name was not specified, use file_name
+def upload_file_to_supabase(file_path, bucket_name, object_name=None):
+    """Upload a file to Supabase Storage and return the public URL."""
+    
     if object_name is None:
-        object_name = os.path.basename(file_name)
+        object_name = os.path.basename(file_path)
 
-    # Upload the file
-    s3_client = get_s3_client()
+    supabase = get_supabase_client()
+    
     try:
-        s3_client.upload_file(file_name, bucket, object_name)
-    except ClientError as e:
-        logger.error(e)
+        with open(file_path, 'rb') as f:
+            # upsert=True to overwrite if exists
+            supabase.storage.from_(bucket_name).upload(
+                path=object_name,
+                file=f,
+                file_options={"content-type": "video/mp4", "upsert": "true"}
+            )
+            
+        # Get public URL
+        # Ensure your bucket is set to Public in Supabase dashboard
+        public_url = supabase.storage.from_(bucket_name).get_public_url(object_name)
+        return public_url
+        
+    except Exception as e:
+        logger.error(f"Failed to upload to Supabase: {e}")
         return None
-
-    # Generate presigned URL
-    try:
-        response = s3_client.generate_presigned_url('get_object',
-                                                    Params={'Bucket': bucket,
-                                                            'Key': object_name},
-                                                    ExpiresIn=expiration)
-    except ClientError as e:
-        logger.error(e)
-        return None
-
-    # If the user wants a clean public URL and their bucket is configured for it,
-    # they can skip using the query params, but returning the presigned URL is safest.
-    return response
-
-if __name__ == "__main__":
-    # Test stub
-    pass

@@ -5,5 +5,5 @@ transformers
 accelerate
 sentencepiece
 protobuf
-boto3
+supabase
 imageio-ffmpeg

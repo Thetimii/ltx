@@ -5,7 +5,7 @@ import uuid
 import logging
 from diffusers import LTXVideoPipeline
 from diffusers.utils import export_to_video
-from src.utils import upload_file_to_s3
+from src.utils import upload_file_to_supabase
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -42,10 +42,8 @@ def handler(job):
     guidance_scale = job_input.get('guidance_scale', 3.0)
     seed = job_input.get('seed', None)
     
-    # Check for S3 config
-    bucket_name = os.environ.get('AWS_BUCKET_NAME')
-    if not bucket_name:
-        return {"error": "AWS_BUCKET_NAME environment variable not set"}
+    # Check for Supabase config
+    bucket_name = os.environ.get('SUPABASE_BUCKET', 'videos') # Default to 'videos' bucket
 
     # Set seed if provided
     generator = None
@@ -73,12 +71,14 @@ def handler(job):
         export_to_video(video_frames, output_path, fps=24)
         logger.info(f"Video saved to {output_path}")
 
-        # Upload to S3
-        logger.info("Uploading to S3")
-        video_url = upload_file_to_s3(output_path, bucket_name, object_name=output_filename)
+        # Upload to Supabase
+        logger.info(f"Uploading to Supabase bucket: {bucket_name}")
+        from src.utils import upload_file_to_supabase
+        video_url = upload_file_to_supabase(output_path, bucket_name, object_name=output_filename)
         
         # Cleanup
         if os.path.exists(output_path):
+            # os.remove(output_path) # Keep for debugging if needed, or remove
             os.remove(output_path)
             
         return {"video_url": video_url}
